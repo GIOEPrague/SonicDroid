@@ -60,15 +60,16 @@ sonicDroid.Viewport.prototype.setSpeed = function(newSpeed) {
   this.speeds.bg = newSpeed;
 };
 
-sonicDroid.Viewport.prototype.addObstacle = function(y) {
+sonicDroid.Viewport.prototype.addObstacle = function(y, speed) {
   var newObstacle,
     obstacleImg;
 
   obstacleImg = new CAAT.SpriteImage().initialize(this.director.getImage('obstacles'), 3, 3);
   newObstacle = new CAAT.Actor()
     .setBackgroundImage(obstacleImg.getRef(), true)
-    .setLocation(this.scene.width, y/*Math.random() * this.scene.height*/)
+    .setLocation(this.scene.width, y)
     .setSpriteIndex(Math.ceil(Math.random() * 8));
+  newObstacle.speed = speed;
 
   this.obstacles.push(newObstacle);
   this.scene.addChild(newObstacle);
@@ -87,7 +88,7 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
     if (this.flameDiff > this.flameInterval) {
       this.flame = !this.flame;
       this.flameDiff -= this.flameInterval;
-      //this.addObstacle();
+      //this.addObstacle(Math.random() * this.scene.height, Math.random() * 500);
     }
     droid.setSpriteIndex(this.flame ? 0 : 1);
     this.flameDiff += timeDiff;
@@ -129,7 +130,7 @@ sonicDroid.Viewport.prototype.moveObstacles = function(timeDiff) {
 
   for (var i = 0; i < obstacles.length; i++) {
     obstacle = obstacles[i];
-    obstacle.x -= obstSpeed * (timeDiff / 1000);
+    obstacle.x -= (obstSpeed + obstacle.speed) * (timeDiff / 1000);
     if (obstacle.x < -obstacle.width || (collided = this.isCollide(this.droid, obstacle))) {
       obstacles.splice(i, 1);
       this.scene.removeChild(obstacle);
