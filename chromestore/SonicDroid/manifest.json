@@ -1,0 +1,16 @@
+{
+  "name": "SonicDroid",
+  "description": "SonicDroid",
+  "version": "0.1.0",
+  "icons": {
+    "128": "icon_128.png"
+  },
+  "app": {
+    "urls": [
+      "http://sonicdroid.psyduck.cz/"
+    ],
+    "launch": {
+      "web_url": "http://sonicdroid.psyduck.cz/"
+    }
+  }
+}

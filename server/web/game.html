@@ -2,8 +2,8 @@
 <head>
 	<title>SonicDroid - Spectrum Visualizer</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<script type="text/javascript" src="files/dsp.js"></script>
-	<link rel="stylesheet" type="text/css" href="/files/bootstrap.css" />
+	<script type="text/javascript" src="files/js/dsp.js"></script>
+	<link rel="stylesheet" type="text/css" href="/files/css/bootstrap.css" />
 </head>
 
 <body>
@@ -16,7 +16,7 @@
             <span class="icon-bar"></span>
           </a>
           <a class="brand" href="#">SonicDroid</a>
-          
+          <div style="float:right;margin-top:9px;">Score: <span id="score">0</span></div>
         </div>
       </div>
     </div>
@@ -29,12 +29,23 @@
         </form>
       </div>
 
+      <script src="./files/js/caat-min.js"></script>
+    <script src="./files/js/viewport.js"></script>
+    <style>
+      #viewport {
+        background-color: black;
+        border: 1px solid black;
+        background-image: url('files/img/bg.png');
+      }
+    </style>
+    <canvas id="viewport"></canvas>
+
 
 	<div id="container">
 		
-		<div><canvas id="fft" width="600" height="480"></canvas></div>
+		<!-- <div><canvas id="fft" width="600" height="480"></canvas></div> -->
 
-		<script type="text/javascript" src="files/example.js"></script>
+		<script type="text/javascript" src="files/js/example.js"></script>
 		<script language="JavaScript">
 
 			var topic = 'jsfftwebaudio';

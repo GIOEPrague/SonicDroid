@@ -118,7 +118,6 @@ var fft = new FFT(bufferSize, 44100);
 
 
 var canvas = document.getElementById('fft');
-var ctx = canvas.getContext('2d');
 
 
 function audioAvailable(event) {
@@ -157,20 +156,27 @@ function audioAvailable(event) {
 }
 function visualizer() {
 
-    currentvalue1 = new Array();
+    //var val = currentvalue.avg();
 
-	ctx.clearRect(0,0, canvas.width, canvas.height);
+    /*
+    for (j = 0; j < count; j++) {
+        //Math.random() * 480, Math.random() * 500
+        
+    }*/
 
-	ctx.fillStyle = '#000044';
-	for (var i=0; i<currentvalue.length; i++) {
-        if (currentvalue[i] > 30) {
-            currentvalue1.push(currentvalue[i]);
-    		// Draw rectangle bars for each frequency bin
-    		ctx.fillRect(i * 8, canvas.height, 7, -currentvalue[i]*3);
-        }
-	}
+    window.viewportController.addObstacle(
+            Math.ceil(Math.random() * 64),
+            Math.random() * 480,
+            function(id) { 
+                var x = currentvalue[id+5] * 2;
+                return x; 
+            },
+            function(id) {
+                var x = 0.6 + (currentvalue[id]/255*1.5);
+                return x; 
+            }
+        );
+	
 
-    console.log(currentvalue.avg());
-
-	t = setTimeout("visualizer()", 1000);
+	t = setTimeout("visualizer()", 100);
 }
