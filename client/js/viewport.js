@@ -18,13 +18,13 @@ sonicDroid.Viewport = function(params) {
   this.obstacles = [];
   this.pickedObstacles = [];
   this.score = 0;
-  this.droidWingSize = 36;
-  this.droidHeadTolerance = 30;
+  this.droidWingSize = 40;
+  this.droidHeadTolerance = 20;
   this.droidTailTolerance = 50;
   this.maxPickingAnimTime = 250;
   this.maxPickingScale = 5;
   this.stars = [];
-  this.starsCount = 100;
+  this.starsCount = 300;
   this.maxStarsZ = 10;
 };
 
