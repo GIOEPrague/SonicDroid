@@ -8,6 +8,8 @@ sonicDroid.Viewport = function(params) {
   this.keys = {};
   this.speeds = {
     move: 500,
+    originalMove: 500,
+    flamed: 1000,
     obstacles: 750
   }
   this.prevTime = -1;
@@ -140,20 +142,10 @@ sonicDroid.Viewport.prototype.animateScene = function(director, time) {
     // FIX change index only when flame is changed
     droid.setSpriteIndex(this.flame ? 0 : 1);
 
-   if (keys.right && !keys.left) {
-      droid.x += speed * (timeDiff / 1000);
-      if ((droid.x + droid.width) > scene.width) {
-        droid.x = scene.width - droid.width;
-      }
-    }
-    else if (keys.up && !keys.down) {
+    if (keys.up && !keys.down) {
       droid.y -= speed * (timeDiff / 1000);
       if (droid.y < 0) {
         droid.y = 0;
-      }
-      droid.x += (speed / 2) * (timeDiff / 1000);
-      if ((droid.x + droid.width) > scene.width) {
-        droid.x = scene.width - droid.width;
       }
     }
     else if (keys.down && !keys.up) {
@@ -161,7 +153,10 @@ sonicDroid.Viewport.prototype.animateScene = function(director, time) {
       if ((droid.y + droid.height) > scene.height) {
         droid.y = scene.height - droid.height;
       }
-      droid.x += (speed / 2) * (timeDiff / 1000);
+    }
+
+    if (keys.right && !keys.left) {
+      droid.x += speed * (timeDiff / 1000);
       if ((droid.x + droid.width) > scene.width) {
         droid.x = scene.width - droid.width;
       }
@@ -259,26 +254,10 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     action = event.getAction();
 
   if (keyCode === CAAT.Keys.UP) {
-    if (action === 'up') {
-      this.droid.setRotation(0);
-      this.flame = false;
-    }
-    else {
-      this.droid.setRotation(-Math.PI / 4);
-      this.flame = true;
-    }
     event.preventDefault();
     this.keys.up = (action !== 'up');
   }
   if (keyCode === CAAT.Keys.DOWN) {
-    if (action === 'up') {
-      this.droid.setRotation(0);
-      this.flame = false;
-    }
-    else {
-      this.droid.setRotation(Math.PI / 4);
-      this.flame = true;
-    }
     event.preventDefault();
     this.keys.down = (action !== 'up');
   }
@@ -292,10 +271,11 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
   if (keyCode === CAAT.Keys.RIGHT) {
     if (action === 'down') {
       this.flame = true;
-      this.droid.setRotation(0);
+      this.speeds.move = this.speeds.flamed;
     }
     else {
       this.flame = false;
+      this.speeds.move = this.speeds.originalMove;
     }
     event.preventDefault();
     this.keys.right = (action !== 'up');
