@@ -7,18 +7,20 @@ sonicDroid.Viewport = function(params) {
   this.keys = {};
   this.speeds = {
     move: 500,
-    bg: 500
+    bg: 750
   }
   this.prevTime = -1;
   this.flameDiff = 0;
   this.flame = true;
   this.flameInterval = 150;
+  this.obstacles = [];
+  this.score = 0;
 };
 
 sonicDroid.Viewport.prototype.init = function() {
   var director;
 
-  director = new CAAT.Director().initialize(
+  this.director = director = new CAAT.Director().initialize(
     this.width,
     this.height,
     document.getElementById(this.id)
@@ -47,11 +49,29 @@ sonicDroid.Viewport.prototype.createScene = function(director) {
   droidImg = new CAAT.SpriteImage().initialize(director.getImage('droid'), 1, 2);
   this.droid = new CAAT.Actor()
     .setBackgroundImage(droidImg.getRef(), true)
-    .setLocation(20, 20);
+    .setLocation(50, 180);
   scene.addChild(this.droid);
 
   scene.createTimer(scene.time, Number.MAX_VALUE, null, this.onSceneTick.bind(this), null);
   director.loop(30);
+};
+
+sonicDroid.Viewport.prototype.setSpeed = function(newSpeed) {
+  this.speeds.bg = newSpeed;
+};
+
+sonicDroid.Viewport.prototype.addObstacle = function(y) {
+  var newObstacle,
+    obstacleImg;
+
+  obstacleImg = new CAAT.SpriteImage().initialize(this.director.getImage('obstacles'), 3, 3);
+  newObstacle = new CAAT.Actor()
+    .setBackgroundImage(obstacleImg.getRef(), true)
+    .setLocation(this.scene.width, y/*Math.random() * this.scene.height*/)
+    .setSpriteIndex(Math.ceil(Math.random() * 8));
+
+  this.obstacles.push(newObstacle);
+  this.scene.addChild(newObstacle);
 };
 
 sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
@@ -62,9 +82,12 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
     scene = this.scene;
 
   if (this.prevTime !== -1) {
+    this.moveObstacles(timeDiff);
+
     if (this.flameDiff > this.flameInterval) {
       this.flame = !this.flame;
       this.flameDiff -= this.flameInterval;
+      //this.addObstacle();
     }
     droid.setSpriteIndex(this.flame ? 0 : 1);
     this.flameDiff += timeDiff;
@@ -98,6 +121,34 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
   this.prevTime = ttime;
 };
 
+sonicDroid.Viewport.prototype.moveObstacles = function(timeDiff) {
+  var obstSpeed = this.speeds.bg,
+    obstacles = this.obstacles,
+    obstacle,
+    collided;
+
+  for (var i = 0; i < obstacles.length; i++) {
+    obstacle = obstacles[i];
+    obstacle.x -= obstSpeed * (timeDiff / 1000);
+    if (obstacle.x < -obstacle.width || (collided = this.isCollide(this.droid, obstacle))) {
+      obstacles.splice(i, 1);
+      this.scene.removeChild(obstacle);
+      if (collided) {
+        this.score++;
+      }
+    }
+  }
+};
+
+sonicDroid.Viewport.prototype.isCollide = function(a, b) {
+  return !(
+    ((a.y + a.height) < (b.y)) ||
+    (a.y > (b.y + b.height)) ||
+    ((a.x + a.width) < b.x) ||
+    (a.x > (b.x + b.width))
+  );
+}
+
 sonicDroid.Viewport.prototype.onKey = function(event) {
   var keyCode = event.getKeyCode(),
     action = event.getAction();
@@ -127,7 +178,10 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     id: 'viewport',
     imageUrls: [{
       id: 'droid', url: 'img/droid.png'
+    }, {
+      id: 'obstacles', url: 'img/mapa_icon.png'
     }]
   });
+  window.viewportController = vp;
   window.addEventListener('load', vp.init.bind(vp), false);
 })();
