@@ -58,7 +58,7 @@ sonicDroid.Viewport.prototype.createScene = function(director) {
     .setLocation(50, 180);
   scene.addChild(this.droid);
 
-  scene.createTimer(scene.time, Number.MAX_VALUE, null, this.onSceneTick.bind(this), null);
+  scene.animate = this.animateScene.bind(this);
   director.loop(30);
 };
 
@@ -83,8 +83,8 @@ sonicDroid.Viewport.prototype.addObstacle = function(id, y, speedCallback, curre
   this.scene.addChild(newObstacle);
 };
 
-sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
-  var timeDiff = ttime - this.prevTime,
+sonicDroid.Viewport.prototype.animateScene = function(director, time) {
+  var timeDiff = time - this.prevTime,
     keys = this.keys,
     speed = this.speeds.move,
     droid = this.droid,
@@ -97,20 +97,28 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
     // FIX change index only when flame is changed
     droid.setSpriteIndex(this.flame ? 0 : 1);
 
-    if (keys.up && !keys.down) {
+   if (keys.right && !keys.left) {
+      droid.x += speed * (timeDiff / 1000);
+      if ((droid.x + droid.width) > scene.width) {
+        droid.x = scene.width - droid.width;
+      }
+    }
+    else if (keys.up && !keys.down) {
       droid.y -= speed * (timeDiff / 1000);
       if (droid.y < 0) {
         droid.y = 0;
       }
+      droid.x += (speed / 2) * (timeDiff / 1000);
+      if ((droid.x + droid.width) > scene.width) {
+        droid.x = scene.width - droid.width;
+      }
     }
-    if (keys.down && !keys.up) {
+    else if (keys.down && !keys.up) {
       droid.y += speed * (timeDiff / 1000);
       if ((droid.y + droid.height) > scene.height) {
         droid.y = scene.height - droid.height;
       }
-    }
-    if (keys.right && !keys.left) {
-      droid.x += speed * (timeDiff / 1000);
+      droid.x += (speed / 2) * (timeDiff / 1000);
       if ((droid.x + droid.width) > scene.width) {
         droid.x = scene.width - droid.width;
       }
@@ -122,8 +130,9 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
       }
     }
   }
+  this.prevTime = time;
 
-  this.prevTime = ttime;
+  return CAAT.Scene.prototype.animate.call(this.scene, director, time);
 };
 
 sonicDroid.Viewport.prototype.moveObstacles = function(timeDiff) {
@@ -207,10 +216,26 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     action = event.getAction();
 
   if (keyCode === CAAT.Keys.UP) {
+    if (action === 'up') {
+      this.droid.setRotation(0);
+      this.flame = false;
+    }
+    else {
+      this.droid.setRotation(-Math.PI / 4);
+      this.flame = true;
+    }
     event.preventDefault();
     this.keys.up = (action !== 'up');
   }
   if (keyCode === CAAT.Keys.DOWN) {
+    if (action === 'up') {
+      this.droid.setRotation(0);
+      this.flame = false;
+    }
+    else {
+      this.droid.setRotation(Math.PI / 4);
+      this.flame = true;
+    }
     event.preventDefault();
     this.keys.down = (action !== 'up');
   }
@@ -224,6 +249,7 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
   if (keyCode === CAAT.Keys.RIGHT) {
     if (action === 'down') {
       this.flame = true;
+      this.droid.setRotation(0);
     }
     else {
       this.flame = false;
@@ -251,12 +277,11 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
       vp.addObstacle(id, Math.random() * vp.scene.height, function(id) {
         return Math.random() * 500;
       }, function(id) {
-        return 0.5 + Math.abs(Math.sin(angle + id)) * 2;
+        angle += Math.PI / 30;
+        return 1.8 + Math.sin(angle + id);
       });
       //vp.addObstacle(100, 0);
-      id++;
-      angle += Math.PI / 10;
-  }, 200);
+  }, 500);
   window.viewportController = vp;
   window.addEventListener('load', vp.init.bind(vp), false);
 })();
