@@ -2,7 +2,7 @@
 	<head>
 		<title>SonicDroid</title>
         <meta charset="utf-8" />
-        <link rel="stylesheet" type="text/css" href="/files/bootstrap.css" />
+        <link rel="stylesheet" type="text/css" href="/files/css/bootstrap.css" />
 	</head>
 	<body>
 
@@ -38,7 +38,7 @@ span {
 
 span[class*="l-"] {
     height: 4px; width: 4px;
-    background: #000;
+    background: #fff;
     display: inline-block;
     margin: 12px 2px;
     
@@ -94,11 +94,11 @@ span.l-6 {-webkit-animation-delay: 0;animation-delay: 0;-ms-animation-delay: 0;-
     50% {-ms-transform: translateX(30px); opacity: 0;}
     100% {opacity: 0;}
 }
-#loader { position: absolute; left: 600px; }
+#loader { position: absolute; left: 600px; padding-top: 10px; }
       </style>
 
       <div id="loader" style="display:none;">
-      <span>Loading</span>
+      <span style="color:#fff">Loading</span>
     <span class="l-1"></span>
     <span class="l-2"></span>
     <span class="l-3"></span>
