@@ -1,0 +1,54 @@
+<html>
+<head>
+	<title>SonicDroid - Spectrum Visualizer</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="files/dsp.js"></script>
+	<link rel="stylesheet" type="text/css" href="/files/bootstrap.css" />
+</head>
+
+<body>
+	<div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">SonicDroid</a>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Main hero unit for a primary marketing message or call to action -->
+      <div class="container">
+        <form action="/" method="post" class="well form-search">
+            <input type="text" style="height: 29px;" name="video" class="span5" value="{{ video }}">
+            <input type="submit" value="Submit" onclick="send();" class="btn btn-primary btn-medium">
+        </form>
+      </div>
+
+
+	<div id="container">
+		
+		<div><canvas id="fft" width="600" height="480"></canvas></div>
+
+		<script type="text/javascript" src="files/example.js"></script>
+		<script language="JavaScript">
+
+			var topic = 'jsfftwebaudio';
+			var comment_teaser = 'Please leave a comment...';
+
+			function init_page() {
+				initAudio("{{ videoId }}");
+			}
+
+			window.onload = init_page;
+
+		</script>
+
+	</div>
+</body>
+
+</html>
