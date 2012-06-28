@@ -8,7 +8,7 @@ sonicDroid.Viewport = function(params) {
   this.keys = {};
   this.speeds = {
     move: 500,
-    bg: 750
+    obstacles: 750
   }
   this.prevTime = -1;
   this.flame = false;
@@ -63,7 +63,7 @@ sonicDroid.Viewport.prototype.createScene = function(director) {
 };
 
 sonicDroid.Viewport.prototype.setSpeed = function(newSpeed) {
-  this.speeds.bg = newSpeed;
+  this.speeds.obstacles = newSpeed;
 };
 
 sonicDroid.Viewport.prototype.addObstacle = function(id, y, speedCallback, currentScaleCallback) {
@@ -109,16 +109,16 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
         droid.y = scene.height - droid.height;
       }
     }
-    if (keys.left && !keys.right) {
-      /*droid.x -= speed * (timeDiff / 1000);
-      if (droid.x < 0) {
-        droid.x = 0;
-      }*/
-    }
     if (keys.right && !keys.left) {
       droid.x += speed * (timeDiff / 1000);
       if ((droid.x + droid.width) > scene.width) {
         droid.x = scene.width - droid.width;
+      }
+    }
+    else if (droid.x > 10) {
+      droid.x -= speed * 1.5 * (timeDiff / 1000);
+      if (droid.x < 10) {
+        droid.x = 10;
       }
     }
   }
@@ -127,7 +127,7 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
 };
 
 sonicDroid.Viewport.prototype.moveObstacles = function(timeDiff) {
-  var obstSpeed = this.speeds.bg,
+  var obstSpeed = this.speeds.obstacles,
     obstacles = this.obstacles,
     obstacle,
     collided,
