@@ -3,9 +3,10 @@ sonicDroid.Viewport = function(params) {
   this.width = params.width;
   this.height = params.height;
   this.id = params.id;
+  this.imageUrls = params.imageUrls;
   this.keys = {};
   this.speeds = {
-    move: 100
+    move: 500
   }
   this.prevTime = -1;
 };
@@ -21,37 +22,65 @@ sonicDroid.Viewport.prototype.init = function() {
 
   CAAT.registerKeyListener(this.onKey.bind(this));
 
-  this.scene = director.createScene();
+  new CAAT.ImagePreloader().loadImages(
+    this.imageUrls,
+    (function(counter, images) {
+      if (counter === images.length) {
+        director.emptyScenes();
+        director.setImagesCache(images);
+        this.createScene(director);
+      }
+    }).bind(this)
+  );
+};
 
-  this.circle = new CAAT.ShapeActor()
-    .setLocation(20,20)
-    .setSize(60,60)
-    .setFillStyle('#ff0000')
-    .setStrokeStyle('#000000');
-  this.scene.addChild(this.circle);
+sonicDroid.Viewport.prototype.createScene = function(director) {
+  var scene,
+    droidImg;
 
-  this.scene.createTimer(this.scene.time, Number.MAX_VALUE, null, this.onSceneTick.bind(this), null);
+  this.scene = scene = director.createScene();
 
+  droidImg = new CAAT.SpriteImage().initialize(director.getImage('droid'), 1, 1);
+  this.droid = new CAAT.Actor()
+    .setBackgroundImage(droidImg.getRef(),true)
+    .setLocation(20, 20);
+  scene.addChild(this.droid);
+
+  scene.createTimer(scene.time, Number.MAX_VALUE, null, this.onSceneTick.bind(this), null);
   director.loop(30);
 };
 
 sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
   var timeDiff = ttime - this.prevTime,
     keys = this.keys,
-    speed = this.speeds.move;
+    speed = this.speeds.move,
+    droid = this.droid,
+    scene = this.scene;
 
   if (this.prevTime !== -1) {
     if (keys.up && !keys.down) {
-      this.circle.y -= speed * (timeDiff / 1000);
+      droid.y -= speed * (timeDiff / 1000);
+      if (droid.y < 0) {
+        droid.y = 0;
+      }
     }
     if (keys.down && !keys.up) {
-      this.circle.y += speed * (timeDiff / 1000);
+      droid.y += speed * (timeDiff / 1000);
+      if ((droid.y + droid.height) > scene.height) {
+        droid.y = scene.height - droid.height;
+      }
     }
     if (keys.left && !keys.right) {
-      this.circle.x -= speed * (timeDiff / 1000);
+      droid.x -= speed * (timeDiff / 1000);
+      if (droid.x < 0) {
+        droid.x = 0;
+      }
     }
     if (keys.right && !keys.left) {
-      this.circle.x += speed * (timeDiff / 1000);
+      droid.x += speed * (timeDiff / 1000);
+      if ((droid.x + droid.width) > scene.width) {
+        droid.x = scene.width - droid.width;
+      }
     }
   }
 
@@ -84,7 +113,10 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
   var vp = new sonicDroid.Viewport({
     width: 800,
     height: 480,
-    id: 'viewport'
+    id: 'viewport',
+    imageUrls: [{
+      id: 'droid', url: 'img/droid.png'
+    }]
   });
   window.addEventListener('load', vp.init.bind(vp), false);
 })();
