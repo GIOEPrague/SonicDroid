@@ -6,9 +6,13 @@ sonicDroid.Viewport = function(params) {
   this.imageUrls = params.imageUrls;
   this.keys = {};
   this.speeds = {
-    move: 500
+    move: 500,
+    bg: 500
   }
   this.prevTime = -1;
+  this.flameDiff = 0;
+  this.flame = true;
+  this.flameInterval = 150;
 };
 
 sonicDroid.Viewport.prototype.init = function() {
@@ -40,9 +44,9 @@ sonicDroid.Viewport.prototype.createScene = function(director) {
 
   this.scene = scene = director.createScene();
 
-  droidImg = new CAAT.SpriteImage().initialize(director.getImage('droid'), 1, 1);
+  droidImg = new CAAT.SpriteImage().initialize(director.getImage('droid'), 1, 2);
   this.droid = new CAAT.Actor()
-    .setBackgroundImage(droidImg.getRef(),true)
+    .setBackgroundImage(droidImg.getRef(), true)
     .setLocation(20, 20);
   scene.addChild(this.droid);
 
@@ -58,6 +62,13 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
     scene = this.scene;
 
   if (this.prevTime !== -1) {
+    if (this.flameDiff > this.flameInterval) {
+      this.flame = !this.flame;
+      this.flameDiff -= this.flameInterval;
+    }
+    droid.setSpriteIndex(this.flame ? 0 : 1);
+    this.flameDiff += timeDiff;
+
     if (keys.up && !keys.down) {
       droid.y -= speed * (timeDiff / 1000);
       if (droid.y < 0) {
