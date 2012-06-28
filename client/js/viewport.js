@@ -3,6 +3,7 @@ sonicDroid.Viewport = function(params) {
   this.width = params.width;
   this.height = params.height;
   this.id = params.id;
+  this.scoreId = params.scoreId;
   this.imageUrls = params.imageUrls;
   this.keys = {};
   this.speeds = {
@@ -10,11 +11,15 @@ sonicDroid.Viewport = function(params) {
     bg: 750
   }
   this.prevTime = -1;
-  this.flameDiff = 0;
-  this.flame = true;
-  this.flameInterval = 150;
+  this.flame = false;
   this.obstacles = [];
+  this.pickedObstacles = [];
   this.score = 0;
+  this.droidWingSize = 36;
+  this.droidHeadTolerance = 30;
+  this.droidTailTolerance = 50;
+  this.maxPickingAnimTime = 250;
+  this.maxPickingScale = 5;
 };
 
 sonicDroid.Viewport.prototype.init = function() {
@@ -38,6 +43,7 @@ sonicDroid.Viewport.prototype.init = function() {
       }
     }).bind(this)
   );
+  this.scoreElem = document.getElementById(this.scoreId);
 };
 
 sonicDroid.Viewport.prototype.createScene = function(director) {
@@ -60,7 +66,7 @@ sonicDroid.Viewport.prototype.setSpeed = function(newSpeed) {
   this.speeds.bg = newSpeed;
 };
 
-sonicDroid.Viewport.prototype.addObstacle = function(y, speed) {
+sonicDroid.Viewport.prototype.addObstacle = function(id, y, speedCallback, currentScaleCallback) {
   var newObstacle,
     obstacleImg;
 
@@ -69,7 +75,9 @@ sonicDroid.Viewport.prototype.addObstacle = function(y, speed) {
     .setBackgroundImage(obstacleImg.getRef(), true)
     .setLocation(this.scene.width, y)
     .setSpriteIndex(Math.ceil(Math.random() * 8));
-  newObstacle.speed = speed;
+  newObstacle.id = id;
+  newObstacle.getCurrentSpeed = speedCallback;
+  newObstacle.getCurrentScale = currentScaleCallback;
 
   this.obstacles.push(newObstacle);
   this.scene.addChild(newObstacle);
@@ -84,14 +92,10 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
 
   if (this.prevTime !== -1) {
     this.moveObstacles(timeDiff);
+    this.animatePickedObstacles(timeDiff);
 
-    if (this.flameDiff > this.flameInterval) {
-      this.flame = !this.flame;
-      this.flameDiff -= this.flameInterval;
-      //this.addObstacle(Math.random() * this.scene.height, Math.random() * 500);
-    }
+    // FIX change index only when flame is changed
     droid.setSpriteIndex(this.flame ? 0 : 1);
-    this.flameDiff += timeDiff;
 
     if (keys.up && !keys.down) {
       droid.y -= speed * (timeDiff / 1000);
@@ -106,10 +110,10 @@ sonicDroid.Viewport.prototype.onSceneTick = function(time, ttime) {
       }
     }
     if (keys.left && !keys.right) {
-      droid.x -= speed * (timeDiff / 1000);
+      /*droid.x -= speed * (timeDiff / 1000);
       if (droid.x < 0) {
         droid.x = 0;
-      }
+      }*/
     }
     if (keys.right && !keys.left) {
       droid.x += speed * (timeDiff / 1000);
@@ -126,22 +130,70 @@ sonicDroid.Viewport.prototype.moveObstacles = function(timeDiff) {
   var obstSpeed = this.speeds.bg,
     obstacles = this.obstacles,
     obstacle,
-    collided;
+    collided,
+    droidCoords,
+    scale;
 
+  droidCoords = {
+    x: this.droid.x - this.droidHeadTolerance,
+    y: (this.droid.y + this.droidWingSize),
+    width: (this.droid.width - this.droidTailTolerance),
+    height: (this.droid.height - this.droidWingSize * 2)
+  };
   for (var i = 0; i < obstacles.length; i++) {
     obstacle = obstacles[i];
-    obstacle.x -= (obstSpeed + obstacle.speed) * (timeDiff / 1000);
-    if (obstacle.x < -obstacle.width || (collided = this.isCollide(this.droid, obstacle))) {
+    obstacle.x -= (obstSpeed + obstacle.getCurrentSpeed(obstacle.id)) * (timeDiff / 1000);
+    scale = obstacle.getCurrentScale(obstacle.id);
+    obstacle.setScale(scale, scale);
+    if (obstacle.x < -obstacle.width || (collided = this.isCollide(droidCoords, obstacle))) {
       obstacles.splice(i, 1);
-      this.scene.removeChild(obstacle);
       if (collided) {
-        this.score++;
+        obstacle.pickingAnimTime = 0;
+        this.pickedObstacles.push(obstacle);
+        this.incrementScore();
+      }
+      else {
+        this.scene.removeChild(obstacle);
       }
     }
   }
 };
 
+sonicDroid.Viewport.prototype.animatePickedObstacles = function(timeDiff) {
+  var obstacles = this.pickedObstacles,
+    obstacle,
+    animCoef,
+    scale,
+    alpha,
+    rotation;
+
+  for (var i = 0; i < obstacles.length; i++) {
+    obstacle = obstacles[i];
+    obstacle.pickingAnimTime += timeDiff;
+
+    animCoef = Math.min(obstacle.pickingAnimTime / this.maxPickingAnimTime, 1);
+    alpha = 1 - animCoef;
+    scale = 1 + animCoef * this.maxPickingScale;
+    rotation = animCoef * Math.PI;
+
+    obstacle.setScale(scale, scale);
+    obstacle.setRotation(rotation);
+    obstacle.setAlpha(alpha);
+    if (obstacle.pickingAnimTime > this.maxPickingAnimTime) {
+      obstacles.splice(i, 1);
+      this.scene.removeChild(obstacle);
+    }
+  }
+
+};
+
+sonicDroid.Viewport.prototype.incrementScore = function() {
+  this.score++;
+  this.scoreElem.innerHTML = this.score;
+};
+
 sonicDroid.Viewport.prototype.isCollide = function(a, b) {
+  // TODO bez křídel
   return !(
     ((a.y + a.height) < (b.y)) ||
     (a.y > (b.y + b.height)) ||
@@ -163,10 +215,19 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     this.keys.down = (action !== 'up');
   }
   if (keyCode === CAAT.Keys.LEFT) {
+    if (action === 'down') {
+      this.flame = false;
+    }
     event.preventDefault();
     this.keys.left = (action !== 'up');
   }
   if (keyCode === CAAT.Keys.RIGHT) {
+    if (action === 'down') {
+      this.flame = true;
+    }
+    else {
+      this.flame = false;
+    }
     event.preventDefault();
     this.keys.right = (action !== 'up');
   }
@@ -177,12 +238,25 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     width: 800,
     height: 480,
     id: 'viewport',
+    scoreId: 'score',
     imageUrls: [{
       id: 'droid', url: 'img/droid.png'
     }, {
       id: 'obstacles', url: 'img/mapa_icon.png'
     }]
   });
+  var angle = 0,
+    id = 0;
+  window.setInterval(function() {
+      vp.addObstacle(id, Math.random() * vp.scene.height, function(id) {
+        return Math.random() * 500;
+      }, function(id) {
+        return 0.5 + Math.abs(Math.sin(angle + id)) * 2;
+      });
+      //vp.addObstacle(100, 0);
+      id++;
+      angle += Math.PI / 10;
+  }, 200);
   window.viewportController = vp;
   window.addEventListener('load', vp.init.bind(vp), false);
 })();
