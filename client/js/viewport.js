@@ -11,6 +11,7 @@ sonicDroid.Viewport = function(params) {
     obstacles: 750
   }
   this.prevTime = -1;
+  this.prevStarTime = -1;
   this.flame = false;
   this.obstacles = [];
   this.pickedObstacles = [];
@@ -20,6 +21,9 @@ sonicDroid.Viewport = function(params) {
   this.droidTailTolerance = 50;
   this.maxPickingAnimTime = 250;
   this.maxPickingScale = 5;
+  this.stars = [];
+  this.starsCount = 100;
+  this.maxStarsZ = 10;
 };
 
 sonicDroid.Viewport.prototype.init = function() {
@@ -30,6 +34,14 @@ sonicDroid.Viewport.prototype.init = function() {
     this.height,
     document.getElementById(this.id)
   );
+
+  for (var i = 0; i < this.starsCount; i++) {
+    this.stars[i] = {
+      x: Math.random() * this.width,
+      y: Math.random() * this.height,
+      z: Math.random() * this.maxStarsZ
+    }
+  }
 
   CAAT.registerKeyListener(this.onKey.bind(this));
 
@@ -48,9 +60,16 @@ sonicDroid.Viewport.prototype.init = function() {
 
 sonicDroid.Viewport.prototype.createScene = function(director) {
   var scene,
-    droidImg;
+    droidImg,
+    stars;
 
   this.scene = scene = director.createScene();
+
+  stars = new CAAT.Actor()
+    .setLocation(0, 0)
+    .setSize(scene.width, scene.height);
+  stars.paint = this.onStarsPaint.bind(this);
+  scene.addChild(stars);
 
   droidImg = new CAAT.SpriteImage().initialize(director.getImage('droid'), 1, 2);
   this.droid = new CAAT.Actor()
@@ -60,6 +79,30 @@ sonicDroid.Viewport.prototype.createScene = function(director) {
 
   scene.animate = this.animateScene.bind(this);
   director.loop(30);
+};
+
+sonicDroid.Viewport.prototype.onStarsPaint = function(director, time) {
+  var ctx = director.ctx,
+    timeDiff = time - this.prevStarTime,
+    speed = this.speeds.move;
+
+  // FIXME it's ugly to abuse the dash character (only draw the line)
+  ctx.fillStyle = 'white';
+  for (var i = 0; i < this.starsCount; i++) {
+    var star = this.stars[i],
+      size = (star.z * 3);
+    ctx.font = size + 'px sans-serif';
+
+    star.x -= (star.z / this.maxStarsZ) * (speed * 2) * (timeDiff / 1000);
+
+    if (star.x < -size) {
+      star.x = this.width + size;
+      star.y = Math.random() * this.height,
+      star.z = Math.random() * this.maxStarsZ;
+    }
+    ctx.fillText('\u2014', star.x, star.y);
+  }
+  this.prevStarTime = time;
 };
 
 sonicDroid.Viewport.prototype.setSpeed = function(newSpeed) {
@@ -275,7 +318,7 @@ sonicDroid.Viewport.prototype.onKey = function(event) {
     id = 0;
   window.setInterval(function() {
       vp.addObstacle(id, Math.random() * vp.scene.height, function(id) {
-        return Math.random() * 500;
+        return id * 10 % 500;
       }, function(id) {
         angle += Math.PI / 30;
         return 1.8 + Math.sin(angle + id);
